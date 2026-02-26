@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-UPSERT_SQL = """
+PRICE_HISTORY_UPSERT = """
     INSERT INTO price_history (
         symbol, trade_date, close_price, adjusted_price,
         change_amount, change_percent,
@@ -28,6 +28,42 @@ UPSERT_SQL = """
         open_price = EXCLUDED.open_price,
         high_price = EXCLUDED.high_price,
         low_price = EXCLUDED.low_price;
+"""
+
+FOREIGN_TRADING_UPSERT = """
+    INSERT INTO foreign_trading (
+        symbol, trade_date, buy_volume, buy_value,
+        sell_volume, sell_value, net_volume, net_value,
+        room_remaining, foreign_ownership_pct,
+        change_amount, change_percent
+    ) VALUES (
+        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+    )
+    ON CONFLICT (symbol, trade_date) DO UPDATE SET
+        buy_volume = EXCLUDED.buy_volume,
+        buy_value = EXCLUDED.buy_value,
+        sell_volume = EXCLUDED.sell_volume,
+        sell_value = EXCLUDED.sell_value,
+        net_volume = EXCLUDED.net_volume,
+        net_value = EXCLUDED.net_value,
+        room_remaining = EXCLUDED.room_remaining,
+        foreign_ownership_pct = EXCLUDED.foreign_ownership_pct,
+        change_amount = EXCLUDED.change_amount,
+        change_percent = EXCLUDED.change_percent;
+"""
+
+PROPRIETARY_TRADING_UPSERT = """
+    INSERT INTO proprietary_trading (
+        symbol, trade_date, buy_volume, buy_value,
+        sell_volume, sell_value
+    ) VALUES (
+        %s, %s, %s, %s, %s, %s
+    )
+    ON CONFLICT (symbol, trade_date) DO UPDATE SET
+        buy_volume = EXCLUDED.buy_volume,
+        buy_value = EXCLUDED.buy_value,
+        sell_volume = EXCLUDED.sell_volume,
+        sell_value = EXCLUDED.sell_value;
 """
 
 
@@ -56,8 +92,8 @@ def init_schema():
         conn.close()
 
 
-def load_csv_to_db(csv_path):
-    """Load a price history CSV file into PostgreSQL."""
+def _load_csv(csv_path, upsert_sql, columns):
+    """Generic CSV-to-DB loader."""
     init_schema()
 
     conn = get_connection()
@@ -67,21 +103,7 @@ def load_csv_to_db(csv_path):
             with open(csv_path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    cur.execute(UPSERT_SQL, (
-                        row["symbol"],
-                        row["trade_date"],
-                        row["close_price"],
-                        row["adjusted_price"],
-                        row["change_amount"],
-                        row["change_percent"],
-                        row["matched_volume"],
-                        row["matched_value"],
-                        row["negotiated_volume"],
-                        row["negotiated_value"],
-                        row["open_price"],
-                        row["high_price"],
-                        row["low_price"],
-                    ))
+                    cur.execute(upsert_sql, tuple(row[col] for col in columns))
                     loaded += 1
         conn.commit()
         print(f"Loaded {loaded} records from {csv_path} into PostgreSQL.")
@@ -89,3 +111,36 @@ def load_csv_to_db(csv_path):
         conn.close()
 
     return loaded
+
+
+def load_price_history_csv(csv_path):
+    """Load a price history CSV file into PostgreSQL."""
+    return _load_csv(csv_path, PRICE_HISTORY_UPSERT, [
+        "symbol", "trade_date", "close_price", "adjusted_price",
+        "change_amount", "change_percent",
+        "matched_volume", "matched_value",
+        "negotiated_volume", "negotiated_value",
+        "open_price", "high_price", "low_price",
+    ])
+
+
+def load_foreign_trading_csv(csv_path):
+    """Load a foreign trading CSV file into PostgreSQL."""
+    return _load_csv(csv_path, FOREIGN_TRADING_UPSERT, [
+        "symbol", "trade_date", "buy_volume", "buy_value",
+        "sell_volume", "sell_value", "net_volume", "net_value",
+        "room_remaining", "foreign_ownership_pct",
+        "change_amount", "change_percent",
+    ])
+
+
+def load_proprietary_trading_csv(csv_path):
+    """Load a proprietary trading CSV file into PostgreSQL."""
+    return _load_csv(csv_path, PROPRIETARY_TRADING_UPSERT, [
+        "symbol", "trade_date", "buy_volume", "buy_value",
+        "sell_volume", "sell_value",
+    ])
+
+
+# Backward compatibility alias
+load_csv_to_db = load_price_history_csv

@@ -1,4 +1,4 @@
-# CafeF Stock Data Scraper
+# kabushiki
 
 Scrapes historical stock data from [cafef.vn](https://cafef.vn) for Vietnamese stock market tickers.
 
@@ -60,7 +60,7 @@ Output CSVs are saved to `data/{SYMBOL}_price_history.csv`.
 ## Project structure
 
 ```
-stocks/
+kabushiki/
 ├── main.py                   # CLI entry point
 ├── scraper/
 │   ├── config.py             # API URL, headers, rate limit
