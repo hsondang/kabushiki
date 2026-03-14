@@ -4,12 +4,16 @@
 CafeF stock data scraper for Vietnamese stock market. Scrapes historical data from cafef.vn's AJAX API and stores it in CSV and PostgreSQL.
 
 ## Tech stack
-- Python 3.12 (pyenv virtualenv: `web-scraping`)
+- Python 3.12 (`uv`-managed `.venv`)
 - PostgreSQL 16 (via Docker)
 - Key libraries: requests, psycopg2-binary, python-dotenv
 
 ## Commands
-- `pyenv activate web-scraping` — activate the virtual environment
+- `uv python install 3.12` — install the project Python version
+- `uv python pin 3.12` — create a local `.python-version` for `uv`
+- `uv venv` — create the local virtual environment
+- `source .venv/bin/activate` — activate the virtual environment
+- `uv pip install -r requirements.txt` — install Python dependencies
 - `python main.py scrape {SYMBOL}` — scrape price history to CSV
 - `python main.py load {SYMBOL}` — load CSV into PostgreSQL
 - `python main.py scrape-and-load {SYMBOL}` — both in one step

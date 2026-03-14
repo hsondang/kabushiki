@@ -9,15 +9,23 @@ Scrapes historical stock data from [cafef.vn](https://cafef.vn) for Vietnamese s
 ## Setup
 
 ### Prerequisites
-- Python 3.12+ (via pyenv)
+- `uv` for Python version and virtual environment management
 - Docker (for PostgreSQL)
 
 ### Install
 
 ```bash
-pyenv activate web-scraping
-pip install -r requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.12
+uv python pin 3.12
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
 ```
+
+`uv` is a fast Python package and environment manager. This project keeps dependencies in `requirements.txt`, and `uv` handles installing Python and creating the local virtual environment.
+
+`uv python pin 3.12` creates a local `.python-version` file for your machine so `uv venv` uses Python 3.12 automatically.
 
 ### Database
 
@@ -43,6 +51,8 @@ python main.py load HDB
 # Scrape and load in one step
 python main.py scrape-and-load HDB
 ```
+
+Run the commands above after activating the environment with `source .venv/bin/activate`.
 
 Output CSVs are saved to `data/{SYMBOL}_price_history.csv`.
 

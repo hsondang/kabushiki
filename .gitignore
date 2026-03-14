@@ -1,6 +1,7 @@
 data/
 .env
 __pycache__/
+.venv/
 venv/
 *.pyc
 .python-version
